@@ -93,8 +93,8 @@ export class CategoryRepository {
   }
 
   countProducts(id: string) {
-    return this.prisma.product.count({
-      where: { categoryId: id },
+    return this.prisma.productCategory.count({
+      where: { categoryId: id, product: { isActive: true } },
     });
   }
 

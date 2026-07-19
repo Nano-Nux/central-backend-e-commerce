@@ -18,15 +18,20 @@ import { AuthModule } from '../auth/auth.module';
 import { StorePaymentsController } from './store-payments.controller';
 import { StorePaymentsService } from './store-payments.service';
 import { StorefrontEmailEventsHandler } from './storefront-email-events.handler';
+import { StorefrontTelegramEventsHandler } from './storefront-telegram-events.handler';
 import { StoreAuthController } from './store-auth.controller';
 import { BrandModule } from '../brand/brand.module';
+import { BannerImageModule } from '../banner-image/banner-image.module';
+import { MinioModule } from '../../infrastructure/minio/minio.module';
 
 @Module({
   imports: [
     AuthModule,
     BrandModule,
+    BannerImageModule,
     CommunicationModule,
     InventoryModule,
+    MinioModule,
     OrdersModule,
     PaymentsModule,
     PricingModule,
@@ -46,6 +51,7 @@ import { BrandModule } from '../brand/brand.module';
     StoreCartService,
     StorePaymentsService,
     StorefrontEmailEventsHandler,
+    StorefrontTelegramEventsHandler,
     GuestOrderAccessGuard,
   ],
   exports: [StoreAccountService, StoreGuestOrdersService],

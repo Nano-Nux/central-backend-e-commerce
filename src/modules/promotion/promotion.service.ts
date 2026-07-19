@@ -20,7 +20,7 @@ export class PromotionService {
       return await this.repository.create({
         id: randomUUID(), code, description: dto.description,
         discountType: dto.discountType, discountValue: dto.discountValue,
-        minimumOrderAmount: dto.minimumOrderAmount ?? 0,
+        minimumOrderAmount: dto.minimumOrderAmount ?? 1,
         startAt: dto.startAt, endAt: dto.endAt, usageLimit: dto.usageLimit,
         isActive: dto.isActive ?? true,
       });

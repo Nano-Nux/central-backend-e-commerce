@@ -26,7 +26,7 @@ export class UpdateProductDto {
   @IsString()
   @MaxLength(100)
   @IsOptional()
-  sku?: string;
+  sku?: string | null;
 
   @ApiPropertyOptional()
   @IsString()
@@ -54,8 +54,13 @@ export class UpdateProductDto {
   @IsOptional()
   isSerialized?: boolean;
 
-  @ApiPropertyOptional()
-  @IsUUID()
+  @ApiPropertyOptional({ type: [String] })
+  @IsUUID('4', { each: true })
   @IsOptional()
-  categoryId?: string | null;
+  categoryIds?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  brandIds?: string[];
 }

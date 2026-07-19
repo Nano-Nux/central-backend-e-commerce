@@ -15,15 +15,20 @@ const productListSelect = {
   isFeatured: true,
   isStockTracked: true,
   isSerialized: true,
-  categoryId: true,
   publishedAt: true,
   createdAt: true,
   updatedAt: true,
-  category: {
+  categoryAssignments: {
     select: {
-      id: true,
-      name: true,
-      path: true,
+      category: {
+        select: {
+          id: true,
+          name: true,
+          label: true,
+          slug: true,
+          path: true,
+        },
+      },
     },
   },
 } as const;

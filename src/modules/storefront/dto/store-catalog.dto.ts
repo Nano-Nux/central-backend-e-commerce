@@ -4,11 +4,14 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
 } from 'class-validator';
+import { CatalogLabel } from '../../shared/catalog-label';
 
 export enum StorefrontStockVisibility {
   IN_STOCK = 'IN_STOCK',
@@ -92,6 +95,11 @@ export class StoreCategoryDetailDto extends StoreCategorySummaryDto {
 }
 
 export class StoreCategoryListQueryDto {
+  @ApiPropertyOptional({ enum: CatalogLabel })
+  @IsEnum(CatalogLabel)
+  @IsOptional()
+  label?: CatalogLabel = CatalogLabel.CATEGORY;
+
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
@@ -141,6 +149,9 @@ export class StoreProductCategoryDto {
 
   @ApiProperty()
   slug!: string;
+
+  @ApiPropertyOptional()
+  description?: string | null;
 }
 
 export class StoreProductCardPriceDto {
@@ -175,6 +186,9 @@ export class StoreProductCardDto {
 
   @ApiPropertyOptional({ type: () => StoreProductCategoryDto })
   category?: StoreProductCategoryDto | null;
+
+  @ApiPropertyOptional({ type: () => StoreProductCategoryDto })
+  brand?: StoreProductCategoryDto | null;
 
   @ApiProperty()
   productType!: string;
@@ -355,6 +369,25 @@ export class StoreProductListQueryDto {
   @IsString()
   @IsOptional()
   categoryId?: string;
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  brandId?: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  minPrice?: number;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  maxPrice?: number;
 
   @ApiPropertyOptional()
   @Type(() => Boolean)

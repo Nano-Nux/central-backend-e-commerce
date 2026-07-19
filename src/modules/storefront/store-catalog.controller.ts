@@ -16,6 +16,7 @@ import {
 } from './dto/store-catalog.dto';
 import { StoreCatalogService } from './store-catalog.service';
 import { BrandService } from '../brand/brand.service';
+import { BannerImageService } from '../banner-image/banner-image.service';
 
 @ApiTags('Store Catalog')
 @Controller('store')
@@ -23,12 +24,19 @@ export class StoreCatalogController {
   constructor(
     private readonly storeCatalogService: StoreCatalogService,
     private readonly brandService: BrandService,
+    private readonly bannerImageService: BannerImageService,
   ) {}
 
   @ApiOkResponse({ description: 'Active landing-page brand advertisements' })
   @Get('brands')
   async listBrands() {
     return { success: true, data: await this.brandService.listActive() };
+  }
+
+  @ApiOkResponse({ description: 'Active landing-page banner images' })
+  @Get('banner-images')
+  async listBannerImages() {
+    return { success: true, data: await this.bannerImageService.listActive() };
   }
 
   @ApiOkResponse({ type: StoreCategoryListResponseDto })

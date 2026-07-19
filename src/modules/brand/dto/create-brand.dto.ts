@@ -9,6 +9,11 @@ export class CreateBrandDto {
   @MaxLength(255)
   name!: string;
 
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  description?: string;
+
   @ApiProperty()
   @IsUrl({ require_tld: false })
   @MaxLength(2048)

@@ -25,7 +25,7 @@ export class StockItemsService {
   async getOrCreateFromProduct(input: {
     productId: string;
     productName: string;
-    productSku: string;
+    productSku?: string | null;
     variantId?: string | null;
     variantName?: string | null;
     variantSku?: string | null;
@@ -44,7 +44,7 @@ export class StockItemsService {
     const variantSuffix = input.variantName?.trim()
       ? ` - ${input.variantName.trim()}`
       : '';
-    const sku = input.variantSku?.trim() || input.productSku.trim();
+    const sku = input.variantSku?.trim() || input.productSku?.trim() || `PRODUCT-${input.productId.slice(0, 8)}`;
 
     return this.stockItemsRepository.create({
       id: randomUUID(),

@@ -135,7 +135,6 @@ export class StoreCartService {
           include: {
             product: {
               include: {
-                category: true,
                 images: {
                   orderBy: { position: 'asc' },
                   take: 1,
@@ -170,7 +169,6 @@ export class StoreCartService {
           include: {
             product: {
               include: {
-                category: true,
                 images: {
                   orderBy: { position: 'asc' },
                   take: 1,

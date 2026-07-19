@@ -14,6 +14,7 @@ import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BrandModule } from './modules/brand/brand.module';
+import { BannerImageModule } from './modules/banner-image/banner-image.module';
 import { CategoryModule } from './modules/category/category.module';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { CrmModule } from './modules/crm/crm.module';
@@ -49,6 +50,7 @@ import { HealthController } from './health.controller';
     AuditModule,
     AuthModule,
     BrandModule,
+    BannerImageModule,
     CategoryModule,
     CommunicationModule,
     CrmModule,

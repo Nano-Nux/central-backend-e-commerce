@@ -31,7 +31,7 @@ class UpdateTestimonialDto {
 @Roles('Admin')
 export class TestimonialsController {
   constructor(private readonly service: TestimonialsService) {}
-  @Get() list() { return { success: true, data: this.service.list() }; }
+  @Get() async list() { return { success: true, data: await this.service.list() }; }
   @Post() create(@Body() dto: TestimonialDto) { return this.service.create(dto); }
   @Patch(':id') update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTestimonialDto) { return this.service.update(id, dto); }
   @Delete(':id') remove(@Param('id', ParseUUIDPipe) id: string) { return this.service.remove(id); }

@@ -130,7 +130,7 @@ describe('ProductService variant lifecycle', () => {
       name: 'Phone',
       sku: 'PHONE',
       type: 'PHYSICAL' as never,
-      categoryId: 'category-1',
+      categoryIds: ['category-1'],
       isStockTracked: true,
       variants: [
         {

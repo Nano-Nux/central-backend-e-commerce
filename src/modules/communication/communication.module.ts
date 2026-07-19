@@ -10,6 +10,7 @@ import { EmailService } from '../email/email.service';
 import { MessagesRepository } from '../messages/messages.repository';
 import { MessagesService } from '../messages/messages.service';
 import { EmailTemplatesService } from '../templates/email-templates.service';
+import { TelegramService } from './telegram.service';
 
 @Module({
   imports: [AuditModule, AuthModule],
@@ -22,12 +23,14 @@ import { EmailTemplatesService } from '../templates/email-templates.service';
     EmailService,
     EmailRepository,
     EmailTemplatesService,
+    TelegramService,
   ],
   exports: [
     ConversationsService,
     MessagesService,
     EmailService,
     EmailTemplatesService,
+    TelegramService,
   ],
 })
 export class CommunicationModule {}

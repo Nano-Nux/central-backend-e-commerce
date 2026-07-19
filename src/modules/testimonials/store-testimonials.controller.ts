@@ -6,5 +6,5 @@ import { TestimonialsService } from './testimonials.service';
 @Controller('store/testimonials')
 export class StoreTestimonialsController {
   constructor(private readonly service: TestimonialsService) {}
-  @Get() list() { return { success: true, data: this.service.listActive() }; }
+  @Get() async list() { return { success: true, data: await this.service.listActive() }; }
 }

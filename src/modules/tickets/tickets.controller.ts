@@ -53,15 +53,17 @@ export class TicketsController {
   @Get('tickets')
   @ApiOperation({ summary: 'List support tickets' })
   @ApiOkResponse({ description: 'Success' })
-  list(@Query('customerId') customerId: string | undefined, @Query() query: PaginationQueryDto) {
-    return this.ticketsService.list(customerId, query.page, query.limit);
+  async list(@Query('customerId') customerId: string | undefined, @Query() query: PaginationQueryDto) {
+    const result = await this.ticketsService.list(customerId, query.page, query.limit);
+    return { success: true, message: 'Success', data: result.data, pagination: result.pagination };
   }
 
   @Get('customers/:customerId/tickets')
   @ApiOperation({ summary: 'List tickets for a customer' })
   @ApiOkResponse({ description: 'Success' })
-  listCustomerTickets(@Param('customerId', ParseUUIDPipe) customerId: string, @Query() query: PaginationQueryDto) {
-    return this.ticketsService.list(customerId, query.page, query.limit);
+  async listCustomerTickets(@Param('customerId', ParseUUIDPipe) customerId: string, @Query() query: PaginationQueryDto) {
+    const result = await this.ticketsService.list(customerId, query.page, query.limit);
+    return { success: true, message: 'Success', data: result.data, pagination: result.pagination };
   }
 
   @Get('tickets/:id')

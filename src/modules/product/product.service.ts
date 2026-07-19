@@ -37,7 +37,11 @@ export class ProductService {
   ) {}
 
   async create(createProductDto: CreateProductDto) {
-    await this.ensureCategoryExists(createProductDto.categoryId);
+    const categoryIds = this.normalizeCategoryIds(
+      createProductDto.categoryIds,
+      createProductDto.brandIds,
+    );
+    await this.ensureCategoriesExist(categoryIds);
     const id = randomUUID();
     const name = sanitizePlainText(createProductDto.name);
     const description = sanitizeOptionalPlainText(createProductDto.description);
@@ -48,14 +52,14 @@ export class ProductService {
       slug: buildStableSlug(name, id.slice(0, 8)),
       description,
       shortDescription: description?.slice(0, 500),
-      sku: sanitizePlainText(createProductDto.sku),
+      sku: normalizeOptionalToken(createProductDto.sku),
       barcode: normalizeOptionalToken(createProductDto.barcode),
       type: createProductDto.type,
       isActive: createProductDto.isActive ?? true,
       isStockTracked: createProductDto.isStockTracked ?? true,
       isSerialized: createProductDto.isSerialized ?? false,
-      category: createProductDto.categoryId
-        ? { connect: { id: createProductDto.categoryId } }
+      categoryAssignments: categoryIds.length
+        ? { create: categoryIds.map((categoryId) => ({ categoryId })) }
         : undefined,
       variants: createProductDto.variants?.length
         ? {
@@ -111,7 +115,7 @@ export class ProductService {
         await this.stockItemsService.getOrCreateFromProduct({
           productId: product.id,
           productName: product.name,
-          productSku: product.sku,
+          productSku: product.sku ?? `PRODUCT-${product.id.slice(0, 8)}`,
           trackInventory: product.isStockTracked,
         });
 
@@ -119,7 +123,7 @@ export class ProductService {
           await this.stockItemsService.getOrCreateFromProduct({
             productId: product.id,
             productName: product.name,
-            productSku: product.sku,
+            productSku: product.sku ?? `PRODUCT-${product.id.slice(0, 8)}`,
             variantId: variant.id,
             variantName: variant.name,
             variantSku: variant.sku,
@@ -146,7 +150,7 @@ export class ProductService {
     ]);
 
     return {
-      data: products,
+      data: products.map((product) => this.normalizeProductDetail(product)),
       pagination: createPaginationMeta(page, limit, total),
     };
   }
@@ -172,12 +176,30 @@ export class ProductService {
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     const existing = await this.findOne(id);
-    await this.ensureCategoryExists(updateProductDto.categoryId);
-
-    const categoryWasProvided = Object.prototype.hasOwnProperty.call(
-      updateProductDto,
-      'categoryId',
+    const categoriesWereProvided =
+      Object.prototype.hasOwnProperty.call(updateProductDto, 'categoryIds') ||
+      Object.prototype.hasOwnProperty.call(updateProductDto, 'brandIds');
+    const categoryIds = this.normalizeCategoryIds(
+      updateProductDto.categoryIds,
     );
+    const brandIds = this.normalizeCategoryIds(updateProductDto.brandIds);
+    const existingCategoryIds = (existing.categories ?? [])
+      .filter((category: any) => category.label !== 'brand')
+      .map((category: any) => category.id);
+    const existingBrandIds = (existing.categories ?? [])
+      .filter((category: any) => category.label === 'brand')
+      .map((category: any) => category.id);
+    const assignmentIds = this.normalizeCategoryIds(
+      categoriesWereProvided && Object.prototype.hasOwnProperty.call(updateProductDto, 'categoryIds')
+        ? categoryIds
+        : existingCategoryIds,
+      categoriesWereProvided && Object.prototype.hasOwnProperty.call(updateProductDto, 'brandIds')
+        ? brandIds
+        : existingBrandIds,
+    );
+    if (categoriesWereProvided) {
+      await this.ensureCategoriesExist(assignmentIds);
+    }
     const name = updateProductDto.name
       ? sanitizePlainText(updateProductDto.name)
       : undefined;
@@ -196,7 +218,7 @@ export class ProductService {
       sku:
         updateProductDto.sku === undefined
           ? undefined
-          : sanitizePlainText(updateProductDto.sku),
+          : normalizeOptionalToken(updateProductDto.sku) ?? null,
       barcode:
         updateProductDto.barcode === undefined
           ? undefined
@@ -205,10 +227,11 @@ export class ProductService {
       isActive: updateProductDto.isActive,
       isStockTracked: updateProductDto.isStockTracked,
       isSerialized: updateProductDto.isSerialized,
-      category: categoryWasProvided
-        ? updateProductDto.categoryId
-          ? { connect: { id: updateProductDto.categoryId } }
-          : { disconnect: true }
+      categoryAssignments: categoriesWereProvided
+        ? {
+            deleteMany: {},
+            create: assignmentIds.map((categoryId) => ({ categoryId })),
+          }
         : undefined,
     };
 
@@ -222,7 +245,7 @@ export class ProductService {
   }
 
   async assignCategory(id: string, dto: AssignProductCategoryDto) {
-    return this.update(id, { categoryId: dto.categoryId ?? null });
+    return this.update(id, { categoryIds: dto.categoryId ? [dto.categoryId] : [] });
   }
 
   async deactivate(id: string) {
@@ -433,7 +456,9 @@ export class ProductService {
     query: ProductListQueryDto,
   ): Prisma.ProductWhereInput {
     return {
-      categoryId: query.categoryId,
+      categoryAssignments: query.categoryId
+        ? { some: { categoryId: query.categoryId } }
+        : undefined,
       type: query.type,
       OR: query.q
         ? [
@@ -455,6 +480,14 @@ export class ProductService {
     if (!category) {
       throw new NotFoundException('Category not found');
     }
+  }
+
+  private async ensureCategoriesExist(categoryIds: string[]) {
+    await Promise.all(categoryIds.map((categoryId) => this.ensureCategoryExists(categoryId)));
+  }
+
+  private normalizeCategoryIds(categoryIds?: string[], brandIds?: string[]) {
+    return [...new Set([...(categoryIds ?? []), ...(brandIds ?? [])])];
   }
 
   private handleKnownWriteError(error: unknown): never {
@@ -490,6 +523,12 @@ export class ProductService {
   }
 
   private normalizeProductDetail(product: any) {
+    const categories = Array.isArray(product?.categoryAssignments)
+      ? product.categoryAssignments.map((assignment: any) => assignment.category)
+      : (product?.categories ?? []);
+
+    product = { ...product, categories };
+
     if (!Array.isArray(product?.inventoryItem)) {
     return product;
   }

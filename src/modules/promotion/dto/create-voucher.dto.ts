@@ -24,9 +24,9 @@ export class CreateVoucherDto {
   @Min(0.01)
   discountValue!: number;
 
-  @ApiPropertyOptional({ default: 0 })
+  @ApiPropertyOptional({ default: 1, minimum: 1 })
   @Type(() => Number)
-  @Min(0)
+  @Min(1)
   @IsOptional()
   minimumOrderAmount?: number;
 

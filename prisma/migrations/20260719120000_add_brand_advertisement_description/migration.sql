@@ -1,0 +1,2 @@
+ALTER TABLE `brands`
+  ADD COLUMN `description` TEXT NULL AFTER `name`;

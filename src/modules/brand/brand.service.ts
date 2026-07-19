@@ -23,6 +23,7 @@ export class BrandService {
       return await this.repository.create({
         id,
         name,
+        description: dto.description,
         imageUrl: dto.imageUrl,
         targetUrl: dto.targetUrl,
         displayOrder: dto.displayOrder,
@@ -67,6 +68,7 @@ export class BrandService {
     try {
       return await this.repository.update(id, {
         name,
+        description: dto.description,
         imageUrl: dto.imageUrl,
         targetUrl: dto.targetUrl,
         displayOrder: dto.displayOrder,

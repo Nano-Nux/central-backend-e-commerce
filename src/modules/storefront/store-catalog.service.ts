@@ -34,7 +34,7 @@ export class StoreCatalogService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where: Prisma.CategoryWhereInput = {
-      label: CatalogLabel.CATEGORY,
+      label: query.label ?? CatalogLabel.CATEGORY,
       parentId: query.parentId,
       OR: query.q
         ? [
@@ -57,9 +57,9 @@ export class StoreCatalogService {
           description: true,
           imageUrl: true,
           parentId: true,
-          products: {
-            where: { isActive: true },
-            select: { id: true },
+          productAssignments: {
+            where: { product: { isActive: true } },
+            select: { productId: true },
           },
         },
       }),
@@ -74,7 +74,7 @@ export class StoreCatalogService {
         description: category.description,
         imageUrl: category.imageUrl,
         parentId: category.parentId,
-        productCount: category.products.length,
+        productCount: category.productAssignments.length,
       }))
       .filter((category) => query.includeEmpty !== false || category.productCount > 0);
 
@@ -96,9 +96,9 @@ export class StoreCatalogService {
         imageUrl: true,
         parentId: true,
         path: true,
-        products: {
-          where: { isActive: true },
-          select: { id: true },
+        productAssignments: {
+          where: { product: { isActive: true } },
+          select: { productId: true },
         },
       },
     });
@@ -114,7 +114,7 @@ export class StoreCatalogService {
         description: category.description,
         imageUrl: category.imageUrl,
         parentId: category.parentId,
-        productCount: category.products.length,
+        productCount: category.productAssignments.length,
         children: [],
       };
 
@@ -159,9 +159,9 @@ export class StoreCatalogService {
         imageUrl: true,
         parentId: true,
         path: true,
-        products: {
-          where: { isActive: true },
-          select: { id: true },
+        productAssignments: {
+          where: { product: { isActive: true } },
+          select: { productId: true },
         },
       },
     });
@@ -180,9 +180,9 @@ export class StoreCatalogService {
         description: true,
         imageUrl: true,
         parentId: true,
-        products: {
-          where: { isActive: true },
-          select: { id: true },
+        productAssignments: {
+          where: { product: { isActive: true } },
+          select: { productId: true },
         },
       },
     });
@@ -196,7 +196,7 @@ export class StoreCatalogService {
       description: category.description,
       imageUrl: category.imageUrl,
       parentId: category.parentId,
-      productCount: category.products.length,
+      productCount: category.productAssignments.length,
       breadcrumb,
       children: childCategories.map((child) => ({
         id: child.id,
@@ -205,7 +205,7 @@ export class StoreCatalogService {
         description: child.description,
         imageUrl: child.imageUrl,
         parentId: child.parentId,
-        productCount: child.products.length,
+        productCount: child.productAssignments.length,
       })),
     };
   }
@@ -220,7 +220,7 @@ export class StoreCatalogService {
     const where: Prisma.ProductWhereInput = {
       isActive: true,
       id: barcodeMatch?.productId,
-      categoryId,
+        categoryAssignments: categoryId ? { some: { categoryId } } : undefined,
       OR:
         query.q && !barcodeMatch
           ? [
@@ -243,11 +243,9 @@ export class StoreCatalogService {
         type: true,
         isFeatured: true,
         createdAt: true,
-        category: {
+        categoryAssignments: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: { select: { id: true, name: true, label: true, slug: true, description: true } },
           },
         },
         images: {
@@ -317,7 +315,8 @@ export class StoreCatalogService {
           slug: product.slug,
           shortDescription: product.shortDescription,
           primaryImageUrl: product.images[0]?.url ?? null,
-          category: product.category,
+          category: this.primaryCategory(product.categoryAssignments),
+          brand: this.primaryBrand(product.categoryAssignments),
           productType: product.type,
           price,
           stockVisibility,
@@ -334,7 +333,12 @@ export class StoreCatalogService {
             product.stockVisibility === StorefrontStockVisibility.LOW_STOCK,
         )
       : pricedProducts;
-    const sorted = this.sortProducts(filtered, query.sort ?? StorefrontProductSort.NEWEST);
+    const filteredByCatalog = filtered.filter((product) =>
+      (!query.brandId || product.brand?.id === query.brandId) &&
+      (query.minPrice === undefined || Number(product.price.amount) >= query.minPrice) &&
+      (query.maxPrice === undefined || Number(product.price.amount) <= query.maxPrice),
+    );
+    const sorted = this.sortProducts(filteredByCatalog, query.sort ?? StorefrontProductSort.NEWEST);
     const start = (page - 1) * limit;
 
     return {
@@ -353,13 +357,12 @@ export class StoreCatalogService {
         shortDescription: true,
         description: true,
         type: true,
+        isActive: true,
         isFeatured: true,
         createdAt: true,
-        category: {
+        categoryAssignments: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: { select: { id: true, name: true, label: true, slug: true, description: true } },
           },
         },
         images: {
@@ -422,7 +425,7 @@ export class StoreCatalogService {
       },
     });
 
-    if (!product || !product.id) {
+    if (!product || !product.isActive) {
       throw new NotFoundException('Product not found');
     }
 
@@ -500,7 +503,8 @@ export class StoreCatalogService {
       slug: product.slug,
       shortDescription: product.shortDescription,
       primaryImageUrl: product.images[0]?.url ?? null,
-      category: product.category,
+      category: this.primaryCategory(product.categoryAssignments),
+      brand: this.primaryBrand(product.categoryAssignments),
       productType: product.type,
       price,
       stockVisibility: this.getStockVisibility(
@@ -527,6 +531,7 @@ export class StoreCatalogService {
         id: true,
         slug: true,
         name: true,
+        isActive: true,
         inventoryItem: {
           select: {
             quantityOnHand: true,
@@ -556,7 +561,7 @@ export class StoreCatalogService {
       },
     });
 
-    if (!product) {
+    if (!product || !product.isActive) {
       throw new NotFoundException('Product not found');
     }
 
@@ -618,7 +623,7 @@ export class StoreCatalogService {
       where: { slug },
       select: {
         id: true,
-        categoryId: true,
+        categoryAssignments: { select: { categoryId: true } },
       },
     });
 
@@ -628,7 +633,9 @@ export class StoreCatalogService {
 
     return this.getProductCollection(
       {
-        categoryId: product.categoryId ?? undefined,
+        categoryAssignments: product.categoryAssignments.length
+          ? { some: { categoryId: { in: product.categoryAssignments.map((assignment) => assignment.categoryId) } } }
+          : undefined,
         id: { not: product.id },
       },
       limit,
@@ -654,11 +661,9 @@ export class StoreCatalogService {
         type: true,
         isFeatured: true,
         createdAt: true,
-        category: {
+        categoryAssignments: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: { select: { id: true, name: true, label: true, slug: true } },
           },
         },
         images: {
@@ -682,7 +687,7 @@ export class StoreCatalogService {
         slug: product.slug,
         shortDescription: product.shortDescription,
         primaryImageUrl: product.images[0]?.url ?? null,
-        category: product.category,
+        category: this.primaryCategory(product.categoryAssignments),
         productType: product.type,
         price: await this.resolveStorePrice(product.id),
         stockVisibility: this.getStockVisibility(
@@ -692,6 +697,16 @@ export class StoreCatalogService {
         createdAt: product.createdAt,
       })),
     );
+  }
+
+  private primaryCategory(assignments: Array<{ category: { id: string; name: string; label: string; slug: string; description?: string | null } }>) {
+    return assignments.find((assignment) => assignment.category.label === CatalogLabel.CATEGORY)?.category
+      ?? assignments[0]?.category
+      ?? null;
+  }
+
+  private primaryBrand(assignments: Array<{ category: { id: string; name: string; label: string; slug: string; description?: string | null } }>) {
+    return assignments.find((assignment) => assignment.category.label === CatalogLabel.BRAND)?.category ?? null;
   }
 
   private async resolveStorePrice(

@@ -114,10 +114,11 @@ export class CreateProductDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @MaxLength(100)
-  sku!: string;
+  @IsOptional()
+  sku?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -144,10 +145,15 @@ export class CreateProductDto {
   @IsOptional()
   isSerialized?: boolean;
 
-  @ApiPropertyOptional()
-  @IsUUID()
+  @ApiPropertyOptional({ type: [String] })
+  @IsUUID('4', { each: true })
   @IsOptional()
-  categoryId?: string;
+  categoryIds?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  brandIds?: string[];
 
   @ApiPropertyOptional({ type: () => [CreateProductVariantDto] })
   @IsArray()

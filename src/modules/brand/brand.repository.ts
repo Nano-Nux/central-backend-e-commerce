@@ -5,6 +5,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 const brandSelect = {
   id: true,
   name: true,
+  description: true,
   imageUrl: true,
   targetUrl: true,
   displayOrder: true,
